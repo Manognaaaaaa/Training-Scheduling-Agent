@@ -9,7 +9,7 @@ Full brief: [docs/PROJECT_BRIEF.md](docs/PROJECT_BRIEF.md)
 - **Backend:** FastAPI (Python 3.12), SQLAlchemy 2.0, pydantic-settings
 - **Frontend:** React + Vite + TypeScript, Tailwind CSS, React Router
 - **Database:** SQLite in dev, Postgres when deployed
-- **LLM:** not chosen yet (will sit behind one interface in `backend/app/llm/`)
+- **LLM:** Groq API (`GROQ_API_KEY`, `GROQ_MODEL` in `backend/.env`), behind one interface in `backend/app/llm/` (wired in Phase 5)
 - **Calendar:** Google Calendar API (sandbox calendar)
 
 ## Running it (Windows, PowerShell)
@@ -36,6 +36,18 @@ uvicorn app.main:app --reload
 
 The API runs on http://localhost:8000 and the interactive docs are at http://localhost:8000/docs.
 Check http://localhost:8000/api/health: it should return `{"status":"ok","database":"ok","tables":11}`.
+
+### Synthetic data and simulator (Phase 1)
+
+Run from `backend/` with the virtual environment active. The app needs seeded data before the Simulation page shows anything.
+
+```powershell
+python -m app.simulator.seed --seed 42 --reset   # drop and regenerate the 2026 year (same seed = same data)
+python -m app.simulator.report                   # writes docs/synthetic_data_report.md
+pytest -q                                        # tests use an in-memory database
+```
+
+The Simulation page (http://localhost:5173/simulation) moves the simulated clock forward; the same controls exist at `/api/sim/advance`, `/api/sim/state`, `/api/sim/progress` and `/api/sim/reset` (see `/docs`).
 
 ### Frontend
 
@@ -67,8 +79,8 @@ Open http://localhost:5173. The sidebar footer shows a green "API connected" bad
 | # | Phase | Status |
 |---|---|---|
 | 0 | Foundation: repo, FastAPI + React skeletons, DB schema | Done |
-| 1 | Synthetic data + simulator | Next |
-| 2 | ERP core: CRUD pages + calendar view | |
+| 1 | Synthetic data + simulator | Done |
+| 2 | ERP core: CRUD pages + calendar view | Next |
 | 3 | Tracking + forecasting: dashboard charts, shortfall risk flags | |
 | 4 | Constraint checker (built before the agent) | |
 | 5 | Agent planner: LLM produces N structured plans from real DB lookups | |
