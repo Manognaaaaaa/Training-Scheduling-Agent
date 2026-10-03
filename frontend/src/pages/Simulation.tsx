@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useState } from 'react'
 import {
   advanceSim,
@@ -29,11 +30,15 @@ export default function Simulation() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const queryClient = useQueryClient()
+
   const refresh = useCallback(async () => {
     const [s, p] = await Promise.all([getSimState(), getSimProgress()])
     setState(s)
     setProgress(p)
-  }, [])
+    // Time moved or data was regenerated: every cached list, drawer and calendar is now stale.
+    await queryClient.invalidateQueries()
+  }, [queryClient])
 
   useEffect(() => {
     Promise.all([getSimState(), getSimProgress()])

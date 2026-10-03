@@ -81,7 +81,7 @@ If a phase needs a schema change, change the model, explain why, and (until Alem
 | 8 | Responsible AI | Audit log page, fairness panel, hallucination catch-rate metric |
 | 9 | Eval, polish, deploy | Metrics report, README, hosted link |
 
-**Current status:** Phase 1 done (synthetic data, simulator, sim API + Simulation page, validation report, tests). Phase 2 not started.
+**Current status:** Phase 1 done (synthetic data, simulator, sim API + Simulation page, validation report, tests). Phase 2 done (ERP core: CRUD API for drivers, trainers, courses, sessions and enrollments; calendar feed; Master Data and Calendar pages; 36 backend tests passing). Phase 3 not started.
 
 ## How to work in this repo
 

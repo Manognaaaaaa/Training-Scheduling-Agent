@@ -26,3 +26,19 @@ def log_event(
     )
     db.add(row)
     return row
+
+
+def _jsonable(value: Any) -> Any:
+    """Dates are stored in the JSON details as ISO strings."""
+    return value.isoformat() if hasattr(value, "isoformat") else value
+
+
+def apply_changes(obj: Any, changes: dict[str, Any]) -> dict[str, list]:
+    """Set each field on ``obj`` and return only the ones that really changed, as ``{field: [old, new]}``."""
+    diff: dict[str, list] = {}
+    for field, new in changes.items():
+        old = getattr(obj, field)
+        if old != new:
+            diff[field] = [_jsonable(old), _jsonable(new)]
+            setattr(obj, field, new)
+    return diff

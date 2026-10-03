@@ -1,1 +1,45 @@
 @import "tailwindcss";
+
+/* --- FullCalendar: colour events by fill band (set in pages/Calendar.tsx) --- */
+.fc-event.fc-band-low {
+  --fc-event-bg-color: #fecaca;
+  --fc-event-border-color: #ef4444;
+  --fc-event-text-color: #7f1d1d;
+}
+.fc-event.fc-band-medium {
+  --fc-event-bg-color: #fde68a;
+  --fc-event-border-color: #f59e0b;
+  --fc-event-text-color: #78350f;
+}
+.fc-event.fc-band-high {
+  --fc-event-bg-color: #a7f3d0;
+  --fc-event-border-color: #059669;
+  --fc-event-text-color: #064e3b;
+}
+.fc-event.fc-band-cancelled {
+  --fc-event-bg-color: #e2e8f0;
+  --fc-event-border-color: #94a3b8;
+  --fc-event-text-color: #475569;
+  text-decoration: line-through;
+}
+/* Completed (past) sessions: muted and striped so past vs future is obvious */
+.fc-completed {
+  opacity: 0.7;
+  background-image: repeating-linear-gradient(45deg, transparent 0 6px, rgba(255, 255, 255, 0.6) 6px 12px) !important;
+}
+.fc-event {
+  cursor: pointer;
+}
+/* Friday and Saturday are not session days: greyed out but still shown */
+.fc-day-fri,
+.fc-day-sat {
+  background-color: #f1f5f9;
+}
+.fc-day-fri .fc-col-header-cell-cushion,
+.fc-day-sat .fc-col-header-cell-cushion {
+  color: #94a3b8;
+}
+.fc {
+  --fc-today-bg-color: rgba(59, 130, 246, 0.06);
+  --fc-now-indicator-color: #2563eb;
+}

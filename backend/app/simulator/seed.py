@@ -21,6 +21,7 @@ from app.simulator import scenarios
 from app.simulator.engine import book_window
 from app.simulator.names import DEPOTS, NATIONALITIES, TRAINER_NAMES
 from app.simulator.rng import rng_for
+from app.simulator.views import create_views, drop_views
 from app.simulator.rules import (
     SESSION_START_HOURS, SESSION_WEEKDAYS, SIM_START, SIM_YEAR, session_end, week_start,
 )
@@ -213,11 +214,13 @@ def generate(db: Session, seed: int) -> dict[str, int]:
     counts = table_counts(db)
     log_event(db, SIM_START, "system", "seed_created", "seed", None, {"seed": seed, "row_counts": counts})
     db.commit()
+    create_views(db)  # readable v_* views for browsing the data
     return table_counts(db)
 
 
 def reseed(engine: Engine, seed: int) -> dict[str, int]:
     """Drop and recreate every table, then generate. Used by --reset, the API and the report."""
+    drop_views(engine)  # views must go first (Postgres will not drop tables they depend on)
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     with Session(engine, expire_on_commit=False, autoflush=False) as db:

@@ -24,3 +24,20 @@ def engine():
 def db(engine):
     with Session(engine, expire_on_commit=False, autoflush=False) as session:
         yield session
+
+
+@pytest.fixture()
+def client(engine):
+    """A TestClient wired to the seeded in-memory DB (no `with`, so the real training.db is never touched)."""
+    from fastapi.testclient import TestClient
+
+    from app.database import get_db
+    from app.main import app
+
+    def override_db():
+        with Session(engine, expire_on_commit=False, autoflush=False) as session:
+            yield session
+
+    app.dependency_overrides[get_db] = override_db
+    yield TestClient(app)
+    app.dependency_overrides.clear()
