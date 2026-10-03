@@ -3,6 +3,7 @@ import AppLayout from './layouts/AppLayout'
 import Alerts from './pages/Alerts'
 import AuditLog from './pages/AuditLog'
 import Calendar from './pages/Calendar'
+import CourseDetail from './pages/CourseDetail'
 import Dashboard from './pages/Dashboard'
 import Fairness from './pages/Fairness'
 import MasterData from './pages/MasterData'
@@ -13,6 +14,7 @@ export default function App() {
     <Routes>
       <Route element={<AppLayout />}>
         <Route index element={<Dashboard />} />
+        <Route path="dashboard/courses/:id" element={<CourseDetail />} />
         <Route path="master-data" element={<MasterData />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="alerts" element={<Alerts />} />

@@ -35,7 +35,7 @@ uvicorn app.main:app --reload
 ```
 
 The API runs on http://localhost:8000 and the interactive docs are at http://localhost:8000/docs.
-Check http://localhost:8000/api/health: it should return `{"status":"ok","database":"ok","tables":11}`.
+Check http://localhost:8000/api/health: it should return `{"status":"ok","database":"ok","tables":12}`.
 
 ### Synthetic data and simulator (Phase 1)
 
@@ -48,6 +48,20 @@ pytest -q                                        # tests use an in-memory databa
 ```
 
 The Simulation page (http://localhost:5173/simulation) moves the simulated clock forward; the same controls exist at `/api/sim/advance`, `/api/sim/state`, `/api/sim/progress` and `/api/sim/reset` (see `/docs`).
+
+### Forecasting and risk flags (Phase 3)
+
+The Dashboard shows, per course, actual completions against the target pace, a year-end forecast with a 90% range, P(hit target), a risk level and the reasons. The forecast uses the sessions still on the calendar ("pipeline forecast"), not a blind trend line. After every simulated Saturday the engine stores a forecast snapshot and opens, updates or auto-resolves alerts (each change is audited).
+
+Phase 3 changed the schema (new `forecast_snapshots` table, three new columns on `alerts`). If you have an older `training.db`, delete it and re-seed:
+
+```powershell
+cd backend
+python -m app.simulator.seed --seed 42 --reset
+python -m app.services.forecast_backtest --seeds 42 1 2 3 4   # writes docs/forecast_backtest.md (about 2 minutes)
+```
+
+API: `/api/tracking/summary`, `/api/tracking/courses`, `/api/tracking/courses/{id}`, `/api/tracking/series`, `POST /api/tracking/recompute`, `/api/alerts`.
 
 ### Frontend
 
@@ -80,8 +94,8 @@ Open http://localhost:5173. The sidebar footer shows a green "API connected" bad
 |---|---|---|
 | 0 | Foundation: repo, FastAPI + React skeletons, DB schema | Done |
 | 1 | Synthetic data + simulator | Done |
-| 2 | ERP core: CRUD pages + calendar view | Next |
-| 3 | Tracking + forecasting: dashboard charts, shortfall risk flags | |
+| 2 | ERP core: CRUD pages + calendar view | Done |
+| 3 | Tracking + forecasting: dashboard charts, shortfall risk flags | Done |
 | 4 | Constraint checker (built before the agent) | |
 | 5 | Agent planner: LLM produces N structured plans from real DB lookups | |
 | 6 | Ranking + alerts inbox: scored plans, LLM alerts, Approve / Reject | |

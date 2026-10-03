@@ -1,5 +1,7 @@
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useState } from 'react'
+import { listAlerts, type Alert } from '../api/alerts'
+import { RiskBadge } from '../components/Badge'
 import {
   advanceSim,
   getSimProgress,
@@ -20,6 +22,20 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
 }
 
+/** What changed in the last advance, read from the alerts' own change markers (last_change / last_change_at). */
+function riskChanges(alerts: Alert[], since: string) {
+  const out = { opened: [] as Alert[], escalated: [] as Alert[], deescalated: [] as Alert[], resolved: [] as Alert[] }
+  for (const a of alerts) {
+    const at = a.details.last_change_at
+    if (!at || at <= since) continue
+    if (a.details.last_change === 'opened') out.opened.push(a)
+    else if (a.details.last_change === 'escalated') out.escalated.push(a)
+    else if (a.details.last_change === 'deescalated') out.deescalated.push(a)
+    else if (a.details.last_change === 'auto_resolved') out.resolved.push(a)
+  }
+  return out
+}
+
 const cell = 'px-3 py-2 text-sm'
 const headCell = 'px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500'
 
@@ -31,6 +47,12 @@ export default function Simulation() {
   const [error, setError] = useState<string | null>(null)
 
   const queryClient = useQueryClient()
+  const alerts = useQuery({
+    queryKey: ['alerts', 'since', summary?.from_time],
+    queryFn: () => listAlerts({ since: summary!.from_time }),
+    enabled: summary !== null,
+  })
+  const changes = summary && alerts.data ? riskChanges(alerts.data, summary.from_time) : null
 
   const refresh = useCallback(async () => {
     const [s, p] = await Promise.all([getSimState(), getSimProgress()])
@@ -167,6 +189,48 @@ export default function Simulation() {
           </div>
         ) : (
           <p className="text-sm text-slate-500">Nothing advanced yet. Use the buttons above.</p>
+        )}
+      </section>
+
+      <section>
+        <h2 className="mb-2 text-lg font-semibold">Risk changes this run</h2>
+        {!summary ? (
+          <p className="text-sm text-slate-500">Advance the clock to see which course risks change.</p>
+        ) : !changes ? (
+          <p className="text-sm text-slate-500">Loading…</p>
+        ) : changes.opened.length + changes.escalated.length + changes.deescalated.length + changes.resolved.length === 0 ? (
+          <p className="text-sm text-slate-500">No alerts were opened, escalated or resolved in this run (alerts are checked at the end of each week).</p>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+            <table className="min-w-full divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-100">
+                {(
+                  [
+                    ['Opened', changes.opened],
+                    ['Escalated', changes.escalated],
+                    ['De-escalated', changes.deescalated],
+                    ['Resolved', changes.resolved],
+                  ] as const
+                ).map(([label, list]) => (
+                  <tr key={label}>
+                    <td className={`${cell} w-40 text-slate-600`}>
+                      {label} <span className="text-slate-400">({list.length})</span>
+                    </td>
+                    <td className={cell}>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                        {list.map((a) => (
+                          <span key={a.id} className="inline-flex items-center gap-1.5">
+                            <span className="font-medium">{a.course_code}</span>
+                            <RiskBadge level={a.risk_level as 'high' | 'medium'} />
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 

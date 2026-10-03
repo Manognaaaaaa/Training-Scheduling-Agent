@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -18,6 +18,30 @@ class Alert(Base):
     target_completions: Mapped[int] = mapped_column(Integer)
     message: Mapped[str | None] = mapped_column(Text, default=None)  # LLM-written text
     status: Mapped[str] = mapped_column(String(20), default="open")  # open / resolved / dismissed
+    # Phase 3: why the course is at risk. details = {p_hit, low, high, reasons: [...], last_change, ...}
+    shortfall_type: Mapped[str | None] = mapped_column(String(20), default=None)  # capacity_gap / attendance_gap / pool_gap
+    details: Mapped[Any] = mapped_column(JSON, default=dict)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=None)  # simulated time
+
+
+class ForecastSnapshot(Base):
+    """The forecast for one course as it stood at the end of a simulated week (history for charts and the backtest)."""
+
+    __tablename__ = "forecast_snapshots"
+    __table_args__ = (UniqueConstraint("course_id", "as_of"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    course_id: Mapped[int] = mapped_column(ForeignKey("courses.id"))
+    as_of: Mapped[datetime] = mapped_column(DateTime)  # simulated time
+    attended: Mapped[int] = mapped_column(Integer)
+    projected: Mapped[float] = mapped_column(Float)
+    low: Mapped[float] = mapped_column(Float)
+    high: Mapped[float] = mapped_column(Float)
+    p_hit: Mapped[float] = mapped_column(Float)
+    naive_projection: Mapped[float] = mapped_column(Float)
+    linear_projection: Mapped[float] = mapped_column(Float)
+    risk_level: Mapped[str] = mapped_column(String(20))
+    shortfall_type: Mapped[str] = mapped_column(String(20))
 
 
 class Plan(Base):

@@ -3,7 +3,7 @@
 Daily order (see ``_process_day``):
 1. apply scenario events dated today      4. attendance for sessions that finished
 2. activate newly hired drivers           5. book drivers into the next 21 days of sessions
-3. roll sick days                         6. (in ``advance``) move the clock
+3. roll sick days                         6. (in ``advance``) move the clock; after a Saturday also ``weekly_close`` (forecast snapshots + alerts)
 
 Every random choice uses ``rng_for(seed, ...)`` with the ids involved, so the result does not
 depend on how the days are grouped into ``advance`` calls.
@@ -18,6 +18,7 @@ from app.models import AuditLog, Course, Driver, DriverUnavailability, Enrollmen
 from app.schemas.sim import AdvanceSummary, DayBreakdown
 from app.services.audit import log_event
 from app.services.sim_clock import get_sim_now, set_sim_now
+from app.services.tracking_jobs import weekly_close
 from app.simulator import scenarios
 from app.simulator.rng import rng_for
 from app.simulator.rules import (
@@ -36,6 +37,7 @@ NIGHT_MORNING_PENALTY = 0.35  # night worker booked into a morning (before 12:00
 MORNING_BEFORE_HOUR = 12
 SICK_DAILY_PROBABILITY = 0.004  # per active driver per day
 SICK_MAX_DAYS = 3
+SATURDAY = 5  # Python weekday(); weeks run Sunday to Saturday
 
 
 def attendance_probability(driver: Driver, session: TrainingSession, unavailable: bool) -> float:
@@ -333,6 +335,8 @@ def advance(db: Session, days: int) -> AdvanceSummary:
         day_rows.append(_process_day(db, seed, day))
         now = min(datetime.combine(day + timedelta(days=1), time.min), SIM_END)
         set_sim_now(db, now)
+        if day.weekday() == SATURDAY:  # the week just closed: snapshot forecasts and sync alerts
+            weekly_close(db)
         db.commit()
 
     def total(field: str) -> int:

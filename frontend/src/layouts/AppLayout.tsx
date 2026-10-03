@@ -1,4 +1,6 @@
+import { useQuery } from '@tanstack/react-query'
 import { NavLink, Outlet } from 'react-router-dom'
+import { getTrackingSummary } from '../api/tracking'
 import ApiStatus from '../components/ApiStatus'
 
 const links = [
@@ -12,6 +14,8 @@ const links = [
 ]
 
 export default function AppLayout() {
+  const summary = useQuery({ queryKey: ['tracking', 'summary'], queryFn: getTrackingSummary })
+  const highRisk = summary.data?.risk_counts.high ?? 0
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
       <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
@@ -29,6 +33,14 @@ export default function AppLayout() {
               }
             >
               {link.label}
+              {link.to === '/' && highRisk > 0 && (
+                <span
+                  className="ml-2 inline-block rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold text-white"
+                  title={`${highRisk} high-risk course${highRisk === 1 ? '' : 's'}`}
+                >
+                  <span aria-hidden="true">▲</span> {highRisk}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

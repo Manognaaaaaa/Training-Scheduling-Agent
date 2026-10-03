@@ -50,7 +50,8 @@ Training_genai/
 
 - **Master:** `drivers` (employee_code, name, nationality, shift day/night/rotating, depot, hire_date, is_active), `trainers` (name, max_sessions_per_week), `courses` (code, name, duration_hours, default_capacity, is_mandatory), `training_targets` (course_id, year, target_completions; unique per course+year)
 - **Scheduling:** `training_sessions` (course, trainer, start/end, location, capacity, status scheduled/completed/cancelled, source seed/manual/agent, gcal_event_id), `enrollments` (session, driver, status booked/attended/no_show/cancelled; unique per session+driver), `driver_unavailability` (driver, start/end, reason)
-- **Agent:** `alerts` (course, sim created_at, risk_level, projected vs target, LLM message, status), `plans` (alert, actions JSON, is_valid, rejection_reasons JSON, score, rank, status), `audit_log` (actor agent/user/system, action, entity_type, entity_id, details JSON), `sim_state` (single row, current simulated time)
+- **Agent:** `alerts` (course, sim created_at, risk_level, projected vs target, LLM message, status open/resolved/dismissed, plus Phase 3: `shortfall_type` capacity_gap/attendance_gap/pool_gap, `details` JSON {p_hit, low, high, reasons[], last_change, last_change_at, ...}, `updated_at` sim time), `plans` (alert, actions JSON, is_valid, rejection_reasons JSON, score, rank, status), `audit_log` (actor agent/user/system, action, entity_type, entity_id, details JSON), `sim_state` (single row, current simulated time)
+- **Forecasting (Phase 3):** `forecast_snapshots` (course, as_of sim time, attended, projected, low, high, p_hit, naive_projection, linear_projection, risk_level, shortfall_type; unique per course+as_of). One row per course per simulated week, written by `services/tracking_jobs.weekly_close` after each Saturday.
 
 "Actual" completions = count of enrollments with status `attended` for a course in the target year.
 
@@ -70,7 +71,7 @@ If a phase needs a schema change, change the model, explain why, and (until Alem
 
 | # | Phase | Done when |
 |---|---|---|
-| 0 | Foundation | Backend runs, 11 tables created, React app runs with sidebar + placeholder pages, frontend shows backend health |
+| 0 | Foundation | Backend runs, 12 tables created, React app runs with sidebar + placeholder pages, frontend shows backend health |
 | 1 | Synthetic data + simulator | Seed script creates a realistic year (drivers, trainers, courses, targets, sessions, enrollments, unavailability) with a fixed random seed; sim clock endpoint can fast-forward and stream attendance |
 | 2 | ERP core | CRUD API + pages for drivers, trainers, courses, sessions; calendar view coloured by fill rate |
 | 3 | Tracking + forecasting | Cumulative actual vs target curves per course; simple time-series forecast; at-risk flags on dashboard |
@@ -81,7 +82,7 @@ If a phase needs a schema change, change the model, explain why, and (until Alem
 | 8 | Responsible AI | Audit log page, fairness panel, hallucination catch-rate metric |
 | 9 | Eval, polish, deploy | Metrics report, README, hosted link |
 
-**Current status:** Phase 1 done (synthetic data, simulator, sim API + Simulation page, validation report, tests). Phase 2 done (ERP core: CRUD API for drivers, trainers, courses, sessions and enrollments; calendar feed; Master Data and Calendar pages; 36 backend tests passing). Phase 3 not started.
+**Current status:** Phase 3 done (tracking + forecasting: weekly series, pipeline forecast with 90% range and P(hit), risk flags with shortfall type and structured reasons, alerts opened/updated/auto-resolved with audit rows, weekly forecast snapshots, Dashboard + course detail pages, `docs/forecast_backtest.md`; schema changed, so `training.db` must be deleted and re-seeded; 83 backend tests passing). Phase 1 done (synthetic data, simulator, sim API + Simulation page, validation report, tests). Phase 2 done (ERP core: CRUD API for drivers, trainers, courses, sessions and enrollments; calendar feed; Master Data and Calendar pages; 36 backend tests passing).
 
 ## How to work in this repo
 

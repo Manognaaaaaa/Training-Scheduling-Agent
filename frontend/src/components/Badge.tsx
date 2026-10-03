@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import type { FillBand } from '../api/sessions'
+import type { RiskLevel } from '../api/tracking'
+import { RISK_ICON, RISK_LABEL } from '../utils/tracking'
 
 type Tone = 'slate' | 'green' | 'amber' | 'red' | 'blue' | 'violet' | 'indigo'
 
@@ -51,4 +53,19 @@ export function FillBadge({ band, rate }: { band: FillBand; rate: number | null 
 
 export function ActiveBadge({ active }: { active: boolean }) {
   return <Badge tone={active ? 'green' : 'slate'}>{active ? 'active' : 'inactive'}</Badge>
+}
+
+const RISK_TONE: Record<RiskLevel, Tone> = { high: 'red', medium: 'amber', low: 'green', achieved: 'blue', insufficient_data: 'slate' }
+
+/** Risk level: icon + text label + colour (never colour alone). Risk colours are used for nothing else. */
+export function RiskBadge({ level }: { level: RiskLevel }) {
+  return (
+    <Badge tone={RISK_TONE[level]}>
+      <span aria-hidden="true">{RISK_ICON[level]}</span> {RISK_LABEL[level]}
+    </Badge>
+  )
+}
+
+export function MandatoryBadge({ mandatory }: { mandatory: boolean }) {
+  return <Badge tone={mandatory ? 'indigo' : 'slate'}>{mandatory ? 'Mandatory' : 'Optional'}</Badge>
 }
